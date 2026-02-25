@@ -38,7 +38,7 @@
 											<div class="invalid-feedback">Please enter the RAO officer name.</div>
 										</div>
 										<div class="col-sm-6">
-											<input id="rao_designation" name="rao_designation" type="text" class="form-control">
+											<input id="rao_designation" name="rao_designation" title="rao_designation" type="text" class="form-control">
 										</div>
 									</div>
 								</div>
@@ -79,7 +79,7 @@
 							<div class="row g-3 mb-2 align-items-center">
 								<div class="col-md-4"><label for="landline" class="form-label">Land Line No.</label></div>
 								<div class="col-md-8">
-									<input id="landline" name="landline" type="tel" class="form-control" pattern="[0-9\-\s]{6,15}">
+									<input id="landline" name="landline" type="tel" class="form-control" pattern="[0-9\-s]{6,15}">
 									<div class="invalid-feedback">Enter a valid land-line (6-15 digits).</div>
 								</div>
 							</div>
@@ -87,7 +87,7 @@
 							<div class="row g-3 mb-2 align-items-center">
 								<div class="col-md-4"><label for="mobile" class="form-label">Mobile No.</label></div>
 								<div class="col-md-8">
-									<input id="mobile" name="mobile" type="tel" class="form-control" required pattern="\\d{10}">
+									<input id="mobile" name="mobile" type="tel" class="form-control" required >
 									<div class="invalid-feedback">Enter a 10-digit mobile number (numbers only).</div>
 								</div>
 							</div>
@@ -108,8 +108,7 @@
 							</div>
 
 							<div class="d-flex justify-content-end">
-								<button type="submit" class="btn btn-primary me-2">Save</button>
-								<button type="button" id="printBtn" class="btn btn-outline-secondary">Print</button>
+								<button type="submit" id="saveBtn" class="btn btn-primary">Save</button>
 							</div>
 						</form>
 
@@ -133,74 +132,109 @@
 					const yyyy = today.getFullYear();
 					const mm = String(today.getMonth()+1).padStart(2,'0');
 					const dd = String(today.getDate()).padStart(2,'0');
-					dateInput.max = `${yyyy}-${mm}-${dd}`;
+					dateInput.max = yyyy + '-' + mm + '-' + dd;
 				}
 			})();
 
-			// Validation logic using Bootstrap styles
+			// Live input: remove invalid when corrected
 			const form = document.getElementById('inspectionForm');
-			form.addEventListener('submit', function(e){
+			form.querySelectorAll('input,textarea').forEach(function(el){
+				el.addEventListener('input', function(){ el.classList.remove('is-invalid'); });
+			});
+
+			// Main form submit handler
+			const saveBtn = document.getElementById('saveBtn');
+			form.addEventListener('submit', async function(e){
 				e.preventDefault();
 				let valid = true;
 				const elements = Array.from(form.querySelectorAll('input,textarea'));
-				elements.forEach(el => {
-					el.classList.remove('is-invalid');
-				});
+				elements.forEach(function(el){ el.classList.remove('is-invalid'); });
 
-				// Use built-in validity and extra checks
-				elements.forEach(el => {
+				// Basic validation
+				elements.forEach(function(el){
 					if(el.required && !el.value.trim()){
 						el.classList.add('is-invalid');
-						valid = false;
+						valid = false; 
 						return;
 					}
-					if(el.type === 'email' && el.value){
-						// browser validity
-						if(!el.checkValidity()){
-							el.classList.add('is-invalid'); valid = false;
+					if(el.type === 'email' && el.value){ 
+						if(!el.checkValidity()){ 
+							el.classList.add('is-invalid'); 
+							valid = false; 
 						}
 					}
-					if(el.pattern && el.value){
-						const re = new RegExp('^'+el.getAttribute('pattern')+'$');
+					if(el.pattern && el.value){ 
+						var re = new RegExp('^'+el.getAttribute('pattern')+'$');
 						if(!re.test(el.value)){
-							el.classList.add('is-invalid'); valid = false;
+							el.classList.add('is-invalid'); 
+							valid = false; 
 						}
 					}
 				});
 
 				// date not in future
-				const dateEl = document.getElementById('inspection_date');
-				if(dateEl && dateEl.value){
-					const selected = new Date(dateEl.value);
-					const today = new Date(); today.setHours(0,0,0,0);
-					if(selected > today){ dateEl.classList.add('is-invalid'); valid = false; }
+				var dateEl = document.getElementById('inspection_date');
+				if(dateEl && dateEl.value){ 
+					var selected = new Date(dateEl.value); 
+					var today = new Date(); today.setHours(0,0,0,0); 
+					if(selected > today){ 
+						dateEl.classList.add('is-invalid'); 
+						valid = false; 
+					}
 				}
 
-				if(!valid){
-					const firstInvalid = form.querySelector('.is-invalid');
-					if(firstInvalid) firstInvalid.focus();
-					return;
+				if(!valid){ 
+					var firstInvalid = form.querySelector('.is-invalid'); 
+					if(firstInvalid) firstInvalid.focus(); 
+					return; 
 				}
 
-				// Save to localStorage
-				const data = {};
-				new FormData(form).forEach((v,k)=>data[k]=v);
+				// Save to localStorage first
+				var data = {};
+				new FormData(form).forEach(function(v,k){ data[k]=v; });
 				try{ localStorage.setItem('inspectionForm', JSON.stringify(data)); }catch(err){}
 
-				// show toast-like confirmation via alert (simple)
-				alert('Form saved locally. You can now print or continue editing.');
-			});
+				// build payload
+				var payload = {
+					raoName: document.getElementById('rao_name').value.trim(),
+					raoDesignation: document.getElementById('rao_designation').value.trim() || null,
+					inspectionDate: document.getElementById('inspection_date').value,
+					itiName: document.getElementById('iti_name').value.trim(),
+					headName: document.getElementById('head_name').value.trim(),
+					postalAddress: document.getElementById('postal_address').value.trim(),
+					landline: document.getElementById('landline').value.trim() || null,
+					mobile: document.getElementById('mobile').value.trim(),
+					email: document.getElementById('email').value.trim(),
+					remarks: document.getElementById('remarks').value.trim() || null
+				};
 
-			// Print button
-			document.getElementById('printBtn').addEventListener('click', function(){
-				window.print();
-			});
+				// disable UI while sending
+				saveBtn.disabled = true;
+				saveBtn.textContent = 'Saving...';
 
-			// Live input: remove invalid when corrected
-			form.querySelectorAll('input,textarea').forEach(el=>{
-				el.addEventListener('input', ()=>el.classList.remove('is-invalid'));
+				try{
+					var res = await fetch('http://localhost:8080/api/forms', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload)
+					});
+
+					if(!res.ok){
+						var text = await res.text();
+						alert('Save failed: ' + (text || res.statusText));
+						return;
+					}
+
+					var saved = await res.json();
+					alert('Saved successfully (id: ' + (saved.id || 'n/a') + ').');
+				} catch(err){
+					console.error(err);
+					alert('Error saving form: ' + err.message);
+				} finally {
+					saveBtn.disabled = false;
+					saveBtn.textContent = 'Save';
+				}
 			});
 		</script>
 	</body>
 </html>
-
