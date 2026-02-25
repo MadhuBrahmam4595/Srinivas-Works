@@ -107,6 +107,18 @@
 								</div>
 							</div>
 
+							<!-- Trades & Units -->
+							<div class="row g-3 mb-3 align-items-start">
+								<div class="col-md-4"><label class="form-label">Trades & Units</label></div>
+								<div class="col-md-8">
+									<div id="tradeUnitsContainer"></div>
+									<div class="mt-2">
+										<button type="button" id="addTradeBtn" class="btn btn-sm btn-outline-primary">Add Trade</button>
+										<span class="small text-muted ms-2">Shift: 1-3, Unit: 1-12</span>
+									</div>
+								</div>
+							</div>
+
 							<div class="d-flex justify-content-end">
 								<button type="submit" id="saveBtn" class="btn btn-primary">Save</button>
 							</div>
@@ -141,6 +153,67 @@
 			form.querySelectorAll('input,textarea').forEach(function(el){
 				el.addEventListener('input', function(){ el.classList.remove('is-invalid'); });
 			});
+
+				// Trades UI helpers
+				const tradeUnitsContainer = document.getElementById('tradeUnitsContainer');
+				const addTradeBtn = document.getElementById('addTradeBtn');
+
+				function createTradeRow(idx, data){
+					const wrapper = document.createElement('div');
+					wrapper.className = 'trade-unit-row d-flex gap-2 align-items-center mb-2';
+
+					wrapper.innerHTML = `
+						<div class="me-2" style="width:36px;text-align:right"><strong class="trade-index">${idx}</strong>.</div>
+						<input type="text" class="form-control form-control-sm trade-name" placeholder="Trade name" style="flex:1" value="${data && data.tradeName ? escapeHtml(data.tradeName) : ''}">
+						<select class="form-select form-select-sm trade-shift" style="width:90px">
+							<option value="">Shift</option>
+							<option value="1">1</option>
+							<option value="2">2</option>
+							<option value="3">3</option>
+						</select>
+						<select class="form-select form-select-sm trade-unit" style="width:110px">
+							<option value="">Unit</option>
+							${generateUnitOptions()}
+						</select>
+						<button type="button" class="btn btn-sm btn-outline-danger btn-remove">Remove</button>
+					`;
+
+					// set preselected values if provided
+					if(data){
+						if(data.shiftValue) wrapper.querySelector('.trade-shift').value = data.shiftValue;
+						if(data.unitValue) wrapper.querySelector('.trade-unit').value = data.unitValue;
+					}
+
+					// remove handler
+					wrapper.querySelector('.btn-remove').addEventListener('click', function(){
+						wrapper.remove(); updateTradeIndices();
+					});
+
+					return wrapper;
+				}
+
+				function generateUnitOptions(){
+					let opts = '';
+					for(let i=1;i<=12;i++) opts += `<option value="${i}">${i}</option>`;
+					return opts;
+				}
+
+				function updateTradeIndices(){
+					const rows = tradeUnitsContainer.querySelectorAll('.trade-unit-row');
+					rows.forEach((r,i)=>{ r.querySelector('.trade-index').textContent = i+1; });
+				}
+
+				function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+				addTradeBtn.addEventListener('click', function(){
+					const row = createTradeRow(tradeUnitsContainer.children.length+1);
+					tradeUnitsContainer.appendChild(row);
+				});
+
+				// add one initial empty row for convenience
+				if(tradeUnitsContainer.children.length === 0){
+					tradeUnitsContainer.appendChild(createTradeRow(1));
+				}
 
 			// Main form submit handler
 			const saveBtn = document.getElementById('saveBtn');
@@ -205,9 +278,22 @@
 					landline: document.getElementById('landline').value.trim() || null,
 					mobile: document.getElementById('mobile').value.trim(),
 					email: document.getElementById('email').value.trim(),
-					remarks: document.getElementById('remarks').value.trim() || null
+					remarks: document.getElementById('remarks').value.trim() || null,
+					tradeUnits: [] // Initialize tradeUnits in the payload
 				};
 
+				// collect trade units from DOM
+				const tradeUnits = [];
+				document.querySelectorAll('.trade-unit-row').forEach(row => {
+					const tnameEl = row.querySelector('.trade-name');
+					const shiftEl = row.querySelector('.trade-shift');
+					const unitEl = row.querySelector('.trade-unit');
+					const tname = tnameEl ? tnameEl.value.trim() : '';
+					const shift = shiftEl ? parseInt(shiftEl.value, 10) : null;
+					const unit = unitEl ? parseInt(unitEl.value, 10) : null;
+					tradeUnits.push({ tradeName: tname, shiftValue: shift, unitValue: unit });
+				});
+				payload.tradeUnits = tradeUnits;
 				// disable UI while sending
 				saveBtn.disabled = true;
 				saveBtn.textContent = 'Saving...';

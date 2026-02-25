@@ -2,6 +2,8 @@ package com.example.inspection.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "inspection_forms")
@@ -41,6 +43,9 @@ public class InspectionForm {
     @Column(name = "remarks", columnDefinition = "text")
     private String remarks;
 
+    @OneToMany(mappedBy = "inspectionForm", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TradeUnit> tradeUnits = new ArrayList<>();
+
     public InspectionForm() {}
 
     public Long getId() { return id; }
@@ -75,4 +80,17 @@ public class InspectionForm {
 
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }
+
+    public List<TradeUnit> getTradeUnits() { return tradeUnits; }
+    public void setTradeUnits(List<TradeUnit> tradeUnits) { this.tradeUnits = tradeUnits; }
+
+    public void addTradeUnit(TradeUnit t){
+        t.setInspectionForm(this);
+        this.tradeUnits.add(t);
+    }
+
+    public void removeTradeUnit(TradeUnit t){
+        t.setInspectionForm(null);
+        this.tradeUnits.remove(t);
+    }
 }

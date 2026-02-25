@@ -33,6 +33,17 @@ public class FormController {
         e.setEmail(req.getEmail());
         e.setRemarks(req.getRemarks());
 
+        // map trade units if present
+        if(req.getTradeUnits() != null){
+            req.getTradeUnits().forEach(treq -> {
+                com.example.inspection.entity.TradeUnit tu = new com.example.inspection.entity.TradeUnit();
+                tu.setTradeName(treq.getTradeName());
+                tu.setShiftValue(treq.getShiftValue());
+                tu.setUnitValue(treq.getUnitValue());
+                e.addTradeUnit(tu);
+            });
+        }
+
         InspectionForm saved = repo.save(e);
         InspectionFormModel model = new InspectionFormModel(saved);
         return ResponseEntity.ok(model);

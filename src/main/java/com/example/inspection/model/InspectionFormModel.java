@@ -2,6 +2,8 @@ package com.example.inspection.model;
 
 import com.example.inspection.entity.InspectionForm;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InspectionFormModel {
     private Long id;
@@ -15,6 +17,7 @@ public class InspectionFormModel {
     private String mobile;
     private String email;
     private String remarks;
+    private List<TradeUnitModel> tradeUnits = new ArrayList<>();
 
     public InspectionFormModel() {}
 
@@ -30,6 +33,9 @@ public class InspectionFormModel {
         this.mobile = e.getMobile();
         this.email = e.getEmail();
         this.remarks = e.getRemarks();
+        if(e.getTradeUnits() != null){
+            e.getTradeUnits().forEach(t -> this.tradeUnits.add(new TradeUnitModel(t)));
+        }
     }
 
     public InspectionForm toEntity(){
@@ -71,4 +77,7 @@ public class InspectionFormModel {
     public void setEmail(String email) { this.email = email; }
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }
+
+    public List<TradeUnitModel> getTradeUnits() { return tradeUnits; }
+    public void setTradeUnits(List<TradeUnitModel> tradeUnits) { this.tradeUnits = tradeUnits; }
 }

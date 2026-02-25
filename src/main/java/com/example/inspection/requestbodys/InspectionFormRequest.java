@@ -1,7 +1,9 @@
 package com.example.inspection.requestbodys;
 
 import jakarta.validation.constraints.*;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.List;
 
 public class InspectionFormRequest {
 
@@ -36,6 +38,9 @@ public class InspectionFormRequest {
 
     private String remarks;
 
+    @Valid
+    private List<TradeUnitRequest> tradeUnits;
+
     public String getRaoName() { return raoName; }
     public void setRaoName(String raoName) { this.raoName = raoName; }
 
@@ -65,4 +70,7 @@ public class InspectionFormRequest {
 
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }
+
+    public List<TradeUnitRequest> getTradeUnits() { return tradeUnits; }
+    public void setTradeUnits(List<TradeUnitRequest> tradeUnits) { this.tradeUnits = tradeUnits; }
 }
