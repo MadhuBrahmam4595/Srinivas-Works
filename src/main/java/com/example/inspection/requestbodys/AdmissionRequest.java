@@ -7,6 +7,9 @@ public class AdmissionRequest {
     @NotBlank
     private String trade;
 
+    @NotNull
+    private Integer year;
+
     @Min(0)
     private Integer admitted;
 
@@ -18,6 +21,9 @@ public class AdmissionRequest {
 
     public String getTrade() { return trade; }
     public void setTrade(String trade) { this.trade = trade; }
+
+    public Integer getYear() { return year; }
+    public void setYear(Integer year) { this.year = year; }
 
     public Integer getAdmitted() { return admitted; }
     public void setAdmitted(Integer admitted) { this.admitted = admitted; }

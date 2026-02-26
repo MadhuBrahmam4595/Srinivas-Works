@@ -49,6 +49,7 @@ public class FormController {
             req.getAdmissions().forEach(areq -> {
                 com.example.inspection.entity.AdmissionDetail a = new com.example.inspection.entity.AdmissionDetail();
                 a.setTrade(areq.getTrade());
+                a.setYear(areq.getYear());
                 a.setAdmitted(areq.getAdmitted());
                 a.setPassed(areq.getPassed());
                 a.setPlaced(areq.getPlaced());

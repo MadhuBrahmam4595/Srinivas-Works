@@ -121,12 +121,18 @@
 
 							<!-- Admissions: Admitted / Passed / Placed -->
 							<div class="row g-3 mb-3 align-items-start">
-								<div class="col-md-4"><label class="form-label">Details of Admissions, Passed & Placed (2023)</label></div>
+								<div class="col-md-4"><label class="form-label">Details of Admissions, Passed & Placed</label></div>
 								<div class="col-md-8">
+									<div class="mb-2">
+										<select id="yearSelect" class="form-select form-select-sm" multiple aria-label="Select years" style="max-width:320px">
+											<!-- options populated by JS -->
+										</select>
+										<div class="small text-muted mt-1">Select up to 3 years to enter data for (hold Ctrl/Cmd to multi-select).</div>
+									</div>
 									<div id="admissionsContainer"></div>
 									<div class="mt-2">
 										<button type="button" id="addAdmissionBtn" class="btn btn-sm btn-outline-primary">Add Row</button>
-										<span class="small text-muted ms-2">Enter admitted / passed / placed counts</span>
+										<span class="small text-muted ms-2">Each row represents a Trade; provide counts per selected year.</span>
 									</div>
 								</div>
 							</div>
@@ -227,36 +233,126 @@
 					tradeUnitsContainer.appendChild(createTradeRow(1));
 				}
 
-					// Admissions UI helpers
+					// Admissions UI helpers (year-select + per-year inputs)
 					const admissionsContainer = document.getElementById('admissionsContainer');
 					const addAdmissionBtn = document.getElementById('addAdmissionBtn');
+					const yearSelect = document.getElementById('yearSelect');
+
+					function populateYearOptions(){
+						const now = new Date();
+						const cur = now.getFullYear();
+						// show last 6 years by default
+						for(let y = cur; y >= cur-5; y--){
+							const opt = document.createElement('option');
+							opt.value = String(y);
+							opt.textContent = String(y);
+							yearSelect.appendChild(opt);
+						}
+						// preselect last 3 years
+						for(let i=0;i<3;i++){ if(yearSelect.options[i]) yearSelect.options[i].selected = true; }
+					}
+
+					function getSelectedYears(){
+						return Array.from(yearSelect.selectedOptions).map(o => parseInt(o.value,10));
+					}
 
 					function createAdmissionRow(idx, data){
+						const years = getSelectedYears();
 						const wrapper = document.createElement('div');
-						wrapper.className = 'admission-row d-flex gap-2 align-items-center mb-2';
+						wrapper.className = 'admission-row mb-2 border rounded p-2';
 
-						wrapper.innerHTML = `
-							<div class="me-2" style="width:36px;text-align:right"><strong class="admission-index">${idx}</strong>.</div>
-							<input type="text" class="form-control form-control-sm admission-trade" placeholder="Trade name" style="flex:1" value="${data && data.trade ? escapeHtml(data.trade) : ''}">
-							<input type="number" min="0" class="form-control form-control-sm admission-admitted" placeholder="Admitted" style="width:110px" value="${data && data.admitted != null ? data.admitted : ''}">
-							<input type="number" min="0" class="form-control form-control-sm admission-passed" placeholder="Passed" style="width:110px" value="${data && data.passed != null ? data.passed : ''}">
-							<input type="number" min="0" class="form-control form-control-sm admission-placed" placeholder="Placed" style="width:110px" value="${data && data.placed != null ? data.placed : ''}">
-							<button type="button" class="btn btn-sm btn-outline-danger btn-remove-admission">Remove</button>
-						`;
+						const left = document.createElement('div');
+						left.className = 'd-flex align-items-center mb-2';
+						left.innerHTML = `<div class="me-2" style="width:36px;text-align:right"><strong class="admission-index">${idx}</strong>.</div>`;
+						const tradeInput = document.createElement('input');
+						tradeInput.type = 'text'; tradeInput.className = 'form-control form-control-sm admission-trade'; tradeInput.placeholder = 'Trade name'; tradeInput.style.flex = '1';
+						tradeInput.value = data && data.trade ? data.trade : '';
+						left.appendChild(tradeInput);
+						wrapper.appendChild(left);
 
-						wrapper.querySelector('.btn-remove-admission').addEventListener('click', function(){ wrapper.remove(); updateAdmissionIndices(); });
+						// create per-year groups
+						const grid = document.createElement('div');
+						grid.className = 'd-flex gap-2 flex-wrap';
+						years.forEach(y => {
+							const col = document.createElement('div');
+							col.style.minWidth = '260px';
+							col.innerHTML = `
+								<div class="small text-muted mb-1">Year: ${y}</div>
+								<div class="d-flex gap-2">
+									<input type="number" min="0" class="form-control form-control-sm admission-admitted admission-admitted-${y}" placeholder="Admitted" value="${data && data.values && data.values[y] && data.values[y].admitted != null ? data.values[y].admitted : ''}">
+									<input type="number" min="0" class="form-control form-control-sm admission-passed admission-passed-${y}" placeholder="Passed" value="${data && data.values && data.values[y] && data.values[y].passed != null ? data.values[y].passed : ''}">
+									<input type="number" min="0" class="form-control form-control-sm admission-placed admission-placed-${y}" placeholder="Placed" value="${data && data.values && data.values[y] && data.values[y].placed != null ? data.values[y].placed : ''}">
+								</div>
+							`;
+							grid.appendChild(col);
+						});
+						wrapper.appendChild(grid);
+
+						const btnRow = document.createElement('div'); btnRow.className = 'mt-2';
+						const removeBtn = document.createElement('button'); removeBtn.type='button'; removeBtn.className='btn btn-sm btn-outline-danger btn-remove-admission'; removeBtn.textContent='Remove';
+						removeBtn.addEventListener('click', function(){ wrapper.remove(); updateAdmissionIndices(); });
+						btnRow.appendChild(removeBtn);
+						wrapper.appendChild(btnRow);
 
 						return wrapper;
 					}
 
+					function updateAdmissionIndices(){
+						const rows = admissionsContainer.querySelectorAll('.admission-row');
+						rows.forEach((r,i)=>{ const idx = r.querySelector('.admission-index'); if(idx) idx.textContent = i+1; });
+					}
+
+					function rebuildAdmissionsPreserveTrades(){
+						const years = getSelectedYears();
+						if(years.length === 0) return;
+						// get existing trade names + values
+						const existing = [];
+						admissionsContainer.querySelectorAll('.admission-row').forEach(row => {
+							const trade = row.querySelector('.admission-trade') ? row.querySelector('.admission-trade').value.trim() : '';
+							const values = {};
+							years.forEach(y => {
+								const a = row.querySelector('.admission-admitted-' + y);
+								const p = row.querySelector('.admission-passed-' + y);
+								const pl = row.querySelector('.admission-placed-' + y);
+								values[y] = {
+									admitted: a && a.value !== '' ? parseInt(a.value,10) : null,
+									passed: p && p.value !== '' ? parseInt(p.value,10) : null,
+									placed: pl && pl.value !== '' ? parseInt(pl.value,10) : null
+								};
+							});
+							existing.push({ trade: trade, values: values });
+						});
+						// rebuild
+						admissionsContainer.innerHTML = '';
+						if(existing.length === 0){
+							admissionsContainer.appendChild(createAdmissionRow(1, null));
+						} else {
+							existing.forEach((d,i)=> admissionsContainer.appendChild(createAdmissionRow(i+1, d)));
+						}
+					}
+
+					// populate years and set change handler
+					populateYearOptions();
+					yearSelect.addEventListener('change', function(){
+						const selected = getSelectedYears();
+						if(selected.length > 3){
+							alert('Please select at most 3 years.');
+							// deselect extra choices (keep first 3)
+							Array.from(yearSelect.options).forEach(o=>{ o.selected = selected.slice(0,3).includes(parseInt(o.value,10)); });
+						}
+						rebuildAdmissionsPreserveTrades();
+					});
+
 					addAdmissionBtn.addEventListener('click', function(){
-						const row = createAdmissionRow(admissionsContainer.children.length+1);
+						const years = getSelectedYears();
+						if(years.length === 0){ alert('Please select at least one year.'); return; }
+						const row = createAdmissionRow(admissionsContainer.children.length+1, null);
 						admissionsContainer.appendChild(row);
 					});
 
 					// add one initial admission row for convenience
 					if(admissionsContainer && admissionsContainer.children.length === 0){
-						admissionsContainer.appendChild(createAdmissionRow(1));
+						admissionsContainer.appendChild(createAdmissionRow(1, null));
 					}
 
 			// Main form submit handler
@@ -338,18 +434,24 @@
 					tradeUnits.push({ tradeName: tname, shiftValue: shift, unitValue: unit });
 				});
 				payload.tradeUnits = tradeUnits;
-					// collect admissions from DOM
+					// collect admissions from DOM (yearwise)
 					const admissions = [];
+					const years = getSelectedYears();
 					document.querySelectorAll('.admission-row').forEach(row => {
 						const tradeEl = row.querySelector('.admission-trade');
-						const admittedEl = row.querySelector('.admission-admitted');
-						const passedEl = row.querySelector('.admission-passed');
-						const placedEl = row.querySelector('.admission-placed');
 						const trade = tradeEl ? tradeEl.value.trim() : '';
-						const admitted = admittedEl && admittedEl.value !== '' ? parseInt(admittedEl.value, 10) : null;
-						const passed = passedEl && passedEl.value !== '' ? parseInt(passedEl.value, 10) : null;
-						const placed = placedEl && placedEl.value !== '' ? parseInt(placedEl.value, 10) : null;
-						admissions.push({ trade: trade, admitted: admitted, passed: passed, placed: placed });
+						years.forEach(y => {
+							const admittedEl = row.querySelector('.admission-admitted-' + y);
+							const passedEl = row.querySelector('.admission-passed-' + y);
+							const placedEl = row.querySelector('.admission-placed-' + y);
+							const admitted = admittedEl && admittedEl.value !== '' ? parseInt(admittedEl.value, 10) : null;
+							const passed = passedEl && passedEl.value !== '' ? parseInt(passedEl.value, 10) : null;
+							const placed = placedEl && placedEl.value !== '' ? parseInt(placedEl.value, 10) : null;
+							// only push if trade provided or at least one number present
+							if(trade || admitted != null || passed != null || placed != null){
+								admissions.push({ trade: trade, year: y, admitted: admitted, passed: passed, placed: placed });
+							}
+						});
 					});
 					payload.admissions = admissions;
 				// disable UI while sending

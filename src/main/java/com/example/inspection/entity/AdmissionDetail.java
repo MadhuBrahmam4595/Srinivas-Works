@@ -13,6 +13,9 @@ public class AdmissionDetail {
     @Column(name = "trade", nullable = false)
     private String trade;
 
+    @Column(name = "year")
+    private Integer year;
+
     @Column(name = "admitted")
     private Integer admitted;
 
@@ -33,6 +36,9 @@ public class AdmissionDetail {
 
     public String getTrade() { return trade; }
     public void setTrade(String trade) { this.trade = trade; }
+
+    public Integer getYear() { return year; }
+    public void setYear(Integer year) { this.year = year; }
 
     public Integer getAdmitted() { return admitted; }
     public void setAdmitted(Integer admitted) { this.admitted = admitted; }
