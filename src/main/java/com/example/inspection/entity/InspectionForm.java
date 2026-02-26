@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "inspection_forms")
+@Table(name = "inspection_forms", schema = "inspection")
 public class InspectionForm {
 
     @Id
@@ -46,6 +46,9 @@ public class InspectionForm {
     @OneToMany(mappedBy = "inspectionForm", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TradeUnit> tradeUnits = new ArrayList<>();
 
+    @OneToMany(mappedBy = "inspectionForm", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AdmissionDetail> admissions = new ArrayList<>();
+
     public InspectionForm() {}
 
     public Long getId() { return id; }
@@ -84,6 +87,9 @@ public class InspectionForm {
     public List<TradeUnit> getTradeUnits() { return tradeUnits; }
     public void setTradeUnits(List<TradeUnit> tradeUnits) { this.tradeUnits = tradeUnits; }
 
+    public List<AdmissionDetail> getAdmissions() { return admissions; }
+    public void setAdmissions(List<AdmissionDetail> admissions) { this.admissions = admissions; }
+
     public void addTradeUnit(TradeUnit t){
         t.setInspectionForm(this);
         this.tradeUnits.add(t);
@@ -92,5 +98,15 @@ public class InspectionForm {
     public void removeTradeUnit(TradeUnit t){
         t.setInspectionForm(null);
         this.tradeUnits.remove(t);
+    }
+
+    public void addAdmission(AdmissionDetail a){
+        a.setInspectionForm(this);
+        this.admissions.add(a);
+    }
+
+    public void removeAdmission(AdmissionDetail a){
+        a.setInspectionForm(null);
+        this.admissions.remove(a);
     }
 }

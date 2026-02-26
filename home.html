@@ -119,6 +119,18 @@
 								</div>
 							</div>
 
+							<!-- Admissions: Admitted / Passed / Placed -->
+							<div class="row g-3 mb-3 align-items-start">
+								<div class="col-md-4"><label class="form-label">Details of Admissions, Passed & Placed (2023)</label></div>
+								<div class="col-md-8">
+									<div id="admissionsContainer"></div>
+									<div class="mt-2">
+										<button type="button" id="addAdmissionBtn" class="btn btn-sm btn-outline-primary">Add Row</button>
+										<span class="small text-muted ms-2">Enter admitted / passed / placed counts</span>
+									</div>
+								</div>
+							</div>
+
 							<div class="d-flex justify-content-end">
 								<button type="submit" id="saveBtn" class="btn btn-primary">Save</button>
 							</div>
@@ -215,6 +227,38 @@
 					tradeUnitsContainer.appendChild(createTradeRow(1));
 				}
 
+					// Admissions UI helpers
+					const admissionsContainer = document.getElementById('admissionsContainer');
+					const addAdmissionBtn = document.getElementById('addAdmissionBtn');
+
+					function createAdmissionRow(idx, data){
+						const wrapper = document.createElement('div');
+						wrapper.className = 'admission-row d-flex gap-2 align-items-center mb-2';
+
+						wrapper.innerHTML = `
+							<div class="me-2" style="width:36px;text-align:right"><strong class="admission-index">${idx}</strong>.</div>
+							<input type="text" class="form-control form-control-sm admission-trade" placeholder="Trade name" style="flex:1" value="${data && data.trade ? escapeHtml(data.trade) : ''}">
+							<input type="number" min="0" class="form-control form-control-sm admission-admitted" placeholder="Admitted" style="width:110px" value="${data && data.admitted != null ? data.admitted : ''}">
+							<input type="number" min="0" class="form-control form-control-sm admission-passed" placeholder="Passed" style="width:110px" value="${data && data.passed != null ? data.passed : ''}">
+							<input type="number" min="0" class="form-control form-control-sm admission-placed" placeholder="Placed" style="width:110px" value="${data && data.placed != null ? data.placed : ''}">
+							<button type="button" class="btn btn-sm btn-outline-danger btn-remove-admission">Remove</button>
+						`;
+
+						wrapper.querySelector('.btn-remove-admission').addEventListener('click', function(){ wrapper.remove(); updateAdmissionIndices(); });
+
+						return wrapper;
+					}
+
+					addAdmissionBtn.addEventListener('click', function(){
+						const row = createAdmissionRow(admissionsContainer.children.length+1);
+						admissionsContainer.appendChild(row);
+					});
+
+					// add one initial admission row for convenience
+					if(admissionsContainer && admissionsContainer.children.length === 0){
+						admissionsContainer.appendChild(createAdmissionRow(1));
+					}
+
 			// Main form submit handler
 			const saveBtn = document.getElementById('saveBtn');
 			form.addEventListener('submit', async function(e){
@@ -294,6 +338,20 @@
 					tradeUnits.push({ tradeName: tname, shiftValue: shift, unitValue: unit });
 				});
 				payload.tradeUnits = tradeUnits;
+					// collect admissions from DOM
+					const admissions = [];
+					document.querySelectorAll('.admission-row').forEach(row => {
+						const tradeEl = row.querySelector('.admission-trade');
+						const admittedEl = row.querySelector('.admission-admitted');
+						const passedEl = row.querySelector('.admission-passed');
+						const placedEl = row.querySelector('.admission-placed');
+						const trade = tradeEl ? tradeEl.value.trim() : '';
+						const admitted = admittedEl && admittedEl.value !== '' ? parseInt(admittedEl.value, 10) : null;
+						const passed = passedEl && passedEl.value !== '' ? parseInt(passedEl.value, 10) : null;
+						const placed = placedEl && placedEl.value !== '' ? parseInt(placedEl.value, 10) : null;
+						admissions.push({ trade: trade, admitted: admitted, passed: passed, placed: placed });
+					});
+					payload.admissions = admissions;
 				// disable UI while sending
 				saveBtn.disabled = true;
 				saveBtn.textContent = 'Saving...';

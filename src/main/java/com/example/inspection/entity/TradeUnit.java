@@ -3,7 +3,7 @@ package com.example.inspection.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "trade_units")
+@Table(name = "trade_units", schema = "inspection")
 public class TradeUnit {
 
     @Id

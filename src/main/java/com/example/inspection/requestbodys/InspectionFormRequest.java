@@ -41,6 +41,9 @@ public class InspectionFormRequest {
     @Valid
     private List<TradeUnitRequest> tradeUnits;
 
+    @Valid
+    private List<AdmissionRequest> admissions;
+
     public String getRaoName() { return raoName; }
     public void setRaoName(String raoName) { this.raoName = raoName; }
 
@@ -73,4 +76,7 @@ public class InspectionFormRequest {
 
     public List<TradeUnitRequest> getTradeUnits() { return tradeUnits; }
     public void setTradeUnits(List<TradeUnitRequest> tradeUnits) { this.tradeUnits = tradeUnits; }
+
+    public List<AdmissionRequest> getAdmissions() { return admissions; }
+    public void setAdmissions(List<AdmissionRequest> admissions) { this.admissions = admissions; }
 }

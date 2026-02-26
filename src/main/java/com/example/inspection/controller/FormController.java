@@ -44,6 +44,18 @@ public class FormController {
             });
         }
 
+        // map admissions if present
+        if(req.getAdmissions() != null){
+            req.getAdmissions().forEach(areq -> {
+                com.example.inspection.entity.AdmissionDetail a = new com.example.inspection.entity.AdmissionDetail();
+                a.setTrade(areq.getTrade());
+                a.setAdmitted(areq.getAdmitted());
+                a.setPassed(areq.getPassed());
+                a.setPlaced(areq.getPlaced());
+                e.addAdmission(a);
+            });
+        }
+
         InspectionForm saved = repo.save(e);
         InspectionFormModel model = new InspectionFormModel(saved);
         return ResponseEntity.ok(model);

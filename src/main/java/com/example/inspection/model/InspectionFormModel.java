@@ -18,6 +18,7 @@ public class InspectionFormModel {
     private String email;
     private String remarks;
     private List<TradeUnitModel> tradeUnits = new ArrayList<>();
+    private List<AdmissionModel> admissions = new ArrayList<>();
 
     public InspectionFormModel() {}
 
@@ -35,6 +36,9 @@ public class InspectionFormModel {
         this.remarks = e.getRemarks();
         if(e.getTradeUnits() != null){
             e.getTradeUnits().forEach(t -> this.tradeUnits.add(new TradeUnitModel(t)));
+        }
+        if(e.getAdmissions() != null){
+            e.getAdmissions().forEach(a -> this.admissions.add(new AdmissionModel(a)));
         }
     }
 
@@ -80,4 +84,7 @@ public class InspectionFormModel {
 
     public List<TradeUnitModel> getTradeUnits() { return tradeUnits; }
     public void setTradeUnits(List<TradeUnitModel> tradeUnits) { this.tradeUnits = tradeUnits; }
+
+    public List<AdmissionModel> getAdmissions() { return admissions; }
+    public void setAdmissions(List<AdmissionModel> admissions) { this.admissions = admissions; }
 }
